@@ -6,6 +6,7 @@ from selenium.webdriver.common.by import By
 from selenium.webdriver.common.keys import Keys
 from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
+from selenium.common.exceptions import ElementClickInterceptedException
 
 import google.auth
 from googleapiclient.errors import HttpError
@@ -40,9 +41,10 @@ def login(browser: webdriver.Chrome) -> bool:
     try:
         browser.get("https://naturalmedicines.therapeuticresearch.com/login?url=https%3a%2f%2fnaturalmedicines.therapeuticresearch.com%2f")
         username = browser.find_element(By.ID, "username")
+        username.send_keys(open("login", "r").read() + Keys.RETURN)
+
         password = browser.find_element(By.ID, "password")
-        username.send_keys(open("login.txt", "r").read() + Keys.RETURN)
-        password.send_keys(open("password.txt", "r").read() + Keys.RETURN)
+        password.send_keys(open("password", "r").read() + Keys.RETURN)
         return True
     except Exception as e:
         print(f"Error logging in: {e}")
@@ -76,10 +78,14 @@ def perform_searches(browser: webdriver.Chrome, interaction_map: dict) -> bool:
             search_box = browser.find_element(By.ID, "searchbox")
             search_box.send_keys(searchterm + Keys.RETURN)
             time.sleep(2)
-        except Exception as e:
-            print(f'Failed to interact with search box: {e}')
-            success = False
+        except ElementClickInterceptedException as e:
+            frame = browser.find_element(By.XPATH, '//*[@id="hs-overlay-cta-127254074383"]/iframe')
+            frame.send_keys(Keys.ESCAPE)
             continue
+        
+        except Exception as e:
+             raise Exception(f"Unable to proceed: {e}")
+        
         
         # a failure here is not fatal; just move on to the next term
         try:
@@ -95,16 +101,28 @@ def perform_searches(browser: webdriver.Chrome, interaction_map: dict) -> bool:
             view_results = browser.find_element(By.ID, "viewResultsButton")
             view_results.click()
             interactions = WebDriverWait(browser, 60).until(EC.presence_of_all_elements_located((By.CLASS_NAME, "searchinteract")))
-        except Exception as e:
-            print(f'Failed to retrieve results for {searchterm}: {e}')
-            success = False
+        except ElementClickInterceptedException as e:
+        
+            frame = browser.find_element(By.XPATH, '//*[@id="hs-overlay-cta-127254074383"]/iframe')
+            frame.send_keys(Keys.ESCAPE)
             continue
+        except Exception as e:
+            raise Exception(f"Unable to proceed: {e}")
+            
         
         # iterate through the scraped data, and store it in the interaction_map
         for i in interactions:
             other_thing = i.find_element(By.XPATH, ".//table/tbody/tr/td/table/tbody/tr/td[1]/span/b/a")
             
-            interaction_severity = i.find_element(By.XPATH, './/table/tbody/tr/td/font/b').text
+            try:
+                interaction_severity = i.find_element(By.XPATH, './/table/tbody/tr/td/font/b').text
+            except ElementClickInterceptedException as e:
+                frame = browser.find_element(By.XPATH, '//*[@id="hs-overlay-cta-127254074383"]/iframe')
+                frame.send_keys(Keys.ESCAPE)
+                interaction_severity = i.find_element(By.XPATH, './/table/tbody/tr/td/font/b').text
+            except Exception as e:
+                raise Exception(f"Unable to proceed: {e}")
+            
             interaction_msg = f'{searchterm} has a {interaction_severity} interaction with {other_thing.text}'
             interaction_map[searchterm].append(interaction_msg)
 
