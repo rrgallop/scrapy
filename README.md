@@ -25,15 +25,14 @@ Before running the script, ensure you have the following:
 
 ### 2. If you haven't already installed `pipenv`, do so now.
 
-    ```bash
     pip install pipenv
-    ```
+    
 
 ### 3. Create a virtual environment and install dependencies
 
-    ```bash
+    
     pipenv install selenium google-auth google-auth-oauthlib google-auth-httplib2 google-api-python-client
-    ```
+    
 
 ### 4. API Key & Credentials
 
