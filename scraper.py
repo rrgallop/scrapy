@@ -36,6 +36,9 @@ def login(browser: webdriver.Chrome) -> bool:
 
     Args:
         browser (WebDriver): A WebDriver object representing the Chrome browser instance.
+
+    Raises:
+        Exception: If an error occurs during the login process.
     """
    
     try:
@@ -47,8 +50,7 @@ def login(browser: webdriver.Chrome) -> bool:
         password.send_keys(open("password", "r").read() + Keys.RETURN)
         return True
     except Exception as e:
-        print(f"Error logging in: {e}")
-        return False
+        raise Exception(f"Error logging in: {e}")
 
 
 def perform_searches(browser: webdriver.Chrome, interaction_map: dict) -> bool:
@@ -60,6 +62,9 @@ def perform_searches(browser: webdriver.Chrome, interaction_map: dict) -> bool:
 
     Returns:
         interaction_map (dict): Contains all interactions for the medications, if they exist.
+    
+    Raises:
+        Exception: If an unrecoverable error occurs during the search process.
     """
 
     browser.get("https://naturalmedicines.therapeuticresearch.com/tools/interaction-checker.aspx")
@@ -71,8 +76,6 @@ def perform_searches(browser: webdriver.Chrome, interaction_map: dict) -> bool:
     success = True
 
     while searchterm and success:
-        
-        # failure to interact with browser elements is fatal, so break out of the loop
         try:
             browser.find_element(By.ID, "clearButton").click()
             search_box = browser.find_element(By.ID, "searchbox")
@@ -82,12 +85,9 @@ def perform_searches(browser: webdriver.Chrome, interaction_map: dict) -> bool:
             frame = browser.find_element(By.XPATH, '//*[@id="hs-overlay-cta-127254074383"]/iframe')
             frame.send_keys(Keys.ESCAPE)
             continue
-        
         except Exception as e:
              raise Exception(f"Unable to proceed: {e}")
         
-        
-        # a failure here is not fatal; just move on to the next term
         try:
             agent_message = browser.find_element(By.CLASS_NAME, "agentMessage")
             if "We could not find your product" in agent_message.text:
@@ -102,7 +102,6 @@ def perform_searches(browser: webdriver.Chrome, interaction_map: dict) -> bool:
             view_results.click()
             interactions = WebDriverWait(browser, 60).until(EC.presence_of_all_elements_located((By.CLASS_NAME, "searchinteract")))
         except ElementClickInterceptedException as e:
-        
             frame = browser.find_element(By.XPATH, '//*[@id="hs-overlay-cta-127254074383"]/iframe')
             frame.send_keys(Keys.ESCAPE)
             continue
@@ -170,6 +169,9 @@ def get_spreadsheet_values(major_interactions: dict) -> list:
 
     Returns:
         list: A list of values retrieved from the spreadsheet.
+
+    Raises:
+        Exception: If an error occurs while retrieving values from the spreadsheet.
     """
     try:
         creds, _ = google.auth.load_credentials_from_file('dfh-helper-key.json')
@@ -195,6 +197,21 @@ def get_spreadsheet_values(major_interactions: dict) -> list:
 
 
 def batch_update_values(spreadsheet_id, range_name, value_input_option, update_values):
+    """
+    Updates the values in a range of a Google Sheets spreadsheet.
+
+    Args:
+        spreadsheet_id (str): The ID of the spreadsheet.
+        range_name (str): The range to update.
+        value_input_option (str): How the input data should be interpreted by the spreadsheet.
+        update_values (list): The values to update.
+
+    Returns:
+        dict: The result of the update operation.
+
+    Raises:
+        Exception: If an error occurs during the update operation.
+    """
     creds, _ = google.auth.load_credentials_from_file('dfh-helper-key.json')
 
     try:
