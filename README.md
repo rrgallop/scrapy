@@ -10,9 +10,8 @@ Before running the script, ensure you have the following:
 
 - **Python:** Make sure you have Python installed on your system.
 - **Chrome Browser:** The script uses the Chrome browser, so make sure it is installed.
-- **WebDriver:** Download the ChromeDriver executable and ensure its location is in your system's PATH.
-- **Google Sheets API Credentials:** Generate and download the API key file (`dfh-helper-key.json`) from the Google Cloud Console.
-- **Google Sheets Spreadsheet:** Create a Google Spreadsheet with the specified `SHEET_ID` and `RANGE_NAME`.
+- **Google Sheets API Credentials:** Download the API key file (`dfh-helper-key.json`)
+- **Login and password:** An account is required to access the target website. See Ryan for details.
 
 ## Installation
 
